@@ -1,42 +1,54 @@
 defmodule AoC2019.Day2 do
-  def run_program(instructions) do
+  def new_memory(), do: %{}
+
+  def write(mem, pos, value) do
+    Map.put(mem, pos, value)
+  end
+
+  def read(mem, pos) do
+    Map.fetch!(mem, pos)
+  end
+
+  def load_ref(mem, pos) do
+    read(mem, read(mem, pos))
+  end
+
+  def run_program(compiled_program, noun, verb) do
     memory =
-      instructions
-      |> Enum.with_index()
-      |> Enum.reduce(%{}, fn {op, idx}, mem -> Map.put(mem, idx, op) end)
-      |> Map.put(1, 12)
-      |> Map.put(2, 2)
+      compiled_program
+      |> write(1, noun)
+      |> write(2, verb)
 
     execute(memory, 0)
+    |> Map.get(0)
+  end
+
+  def compile_program(instructions) do
+    instructions
+    |> Enum.with_index()
+    |> Enum.reduce(new_memory(), fn {op, addr}, mem -> mem |> write(addr, op) end)
   end
 
   def execute(memory, pc) do
-    IO.inspect(memory)
     op = memory[pc]
 
     case op do
       1 ->
-        p1 = Map.fetch!(memory, pc + 1)
-        p2 = Map.fetch!(memory, pc + 2)
-        p3 = Map.fetch!(memory, pc + 3)
-
-        v1 = Map.fetch!(memory, p1)
-        v2 = Map.fetch!(memory, p2)
+        v1 = load_ref(memory, pc + 1)
+        v2 = load_ref(memory, pc + 2)
+        p3 = read(memory, pc + 3)
 
         memory
-        |> Map.put(p3, v1 + v2)
+        |> write(p3, v1 + v2)
         |> execute(pc + 4)
 
       2 ->
-        p1 = Map.fetch!(memory, pc + 1)
-        p2 = Map.fetch!(memory, pc + 2)
-        p3 = Map.fetch!(memory, pc + 3)
-
-        v1 = Map.fetch!(memory, p1)
-        v2 = Map.fetch!(memory, p2)
+        v1 = load_ref(memory, pc + 1)
+        v2 = load_ref(memory, pc + 2)
+        p3 = read(memory, pc + 3)
 
         memory
-        |> Map.put(p3, v1 * v2)
+        |> write(p3, v1 * v2)
         |> execute(pc + 4)
 
       99 ->
@@ -199,4 +211,25 @@ input = [
   0
 ]
 
-AoC2019.Day2.run_program(input)
+defmodule Searcher do
+  def search(input, target, noun, verb) do
+    space = for i <- 0..99, j <- 0..99, do: {i, j}
+    program = AoC2019.Day2.compile_program(input)
+
+    {duration, {noun, verb}} =
+      :timer.tc(fn ->
+        Enum.find(space, fn {n, v} ->
+          try do
+            19_690_720 === AoC2019.Day2.run_program(program, n, v)
+          rescue
+            _ -> false
+          end
+        end)
+      end)
+
+    {duration / 1000, noun * 100 + verb}
+  end
+end
+
+Searcher.search(input, 19_690_720, 0, 0)
+|> IO.inspect(label: "part2")
