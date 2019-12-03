@@ -50,7 +50,7 @@ defmodule AoC2019.Day3 do
     |> Enum.map(fn {l1, l2} -> intersection(l1, l2) end)
     |> Enum.reject(fn
       {0, 0} -> true
-      :none -> true
+      :no_intersection -> true
       _ -> false
     end)
   end
@@ -67,9 +67,7 @@ defmodule AoC2019.Day3 do
     {x1, y3}
   end
 
-  defp intersection(_, _) do
-    :none
-  end
+  defp intersection(_, _), do: :no_intersection
 end
 
 AoC2019.Day3.part1()
