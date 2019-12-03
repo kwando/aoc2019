@@ -20,7 +20,7 @@ defmodule AoC2019.Day2 do
       |> write(2, verb)
 
     execute(memory, 0)
-    |> Map.get(0)
+    |> read(0)
   end
 
   def compile_program(instructions) do
